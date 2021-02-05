@@ -14,6 +14,11 @@ class SnakeAction(object):
     DOWN = 3
     INVALID = 4
 
+def invAct(act):
+    if act==4:
+        return 4
+    return act//2*2 + 1-act%2
+
 class SnakeCellState(object):
     EMPTY = 0
     WALL = 1
@@ -74,14 +79,20 @@ class SnakeGame(object):
         return action//2!=self.prev_action//2 or action%2==self.prev_action%2
 
     def next_head(self, action):
+        r=None
         head_x, head_y = self.head()
-        if action == SnakeAction.LEFT:
-            return (head_x - 1, head_y)
-        if action == SnakeAction.RIGHT:
-            return (head_x + 1, head_y)
-        if action == SnakeAction.UP:
-            return (head_x, head_y + 1)
-        return (head_x, head_y - 1)
+        if action == SnakeAction.INVALID:
+            r=(head_x, head_y)
+        elif action == SnakeAction.LEFT:
+            r=(head_x - 1, head_y)
+        elif action == SnakeAction.RIGHT:
+            r=(head_x + 1, head_y)
+        elif action == SnakeAction.UP:
+            r=(head_x, head_y + 1)
+        else:
+            r=(head_x, head_y - 1)
+        r=((r[0]+self.width)%self.width,(r[1]+self.height)%self.height)
+        return r
 
     def step(self, action):
         if not self.is_valid_action(action):
@@ -89,7 +100,6 @@ class SnakeGame(object):
         self.prev_action = action
 
         next_head = self.next_head(action)
-        next_head=((next_head[0]+self.width)%self.width,(next_head[1]+self.height)%self.height)
         next_head_state = self.cell_state(next_head)
 
         if next_head_state == SnakeCellState.WALL:
@@ -125,17 +135,28 @@ class SnakeEnv(gym.Env):
         self.game = SnakeGame(self.width, self.height, self.start)
         self.viewer = None
 
+    def make_obs(self):
+        obs = [[[0.0 for _ in range(self.width)] for __ in range(self.height)] for ___ in range(2)]
+        snake_len=len(self.game.snake)
+        for i in range(snake_len):
+            y,x=self.game.snake[i]
+            obs[0][y][x]=1.0+i/snake_len
+        if snake_len:
+            py,px=self.game.next_head(invAct(self.game.prev_action))
+            obs[0][py][px]=1.0+1/snake_len
+        obs[1][self.game.dot[0]][self.game.dot[1]]=1.0
+        return obs
+    
     def step(self, action):
         reward = self.game.step(action)
         done = reward in [SnakeReward.DEAD, SnakeReward.WON]
-        observation = {"snake":self.game.snake, "dot":self.game.dot}
         info = None
-        return observation, reward, done, info
+    
+        return self.make_obs(), reward, done, info
 
     def reset(self):
         self.game = SnakeGame(self.width, self.height, self.start)
-        observation = {"snake":self.game.snake, "dot":self.game.dot}
-        return observation
+        return self.make_obs()
 
     def render(self, mode='human', close=False):
         width = height = 600
