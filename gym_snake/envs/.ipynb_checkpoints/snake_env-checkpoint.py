@@ -20,15 +20,16 @@ class SnakeCellState(object):
     DOT = 2
 
 class SnakeReward(object):
-    ALIVE = -0.1
-    DOT = 5
-    DEAD = -100
-    WON = 100
+    ALIVE = 0
+    DOT = 1
+    DEAD = -5
+    WON = 10
 
 class SnakeGame(object):
     def __init__(self, width, height, head):
         self.width = width
         self.height = height
+        self.cur_step=0
 
         self.snake = deque()
         self.empty_cells = {(x, y) for x in range(width) for y in range(height)}
@@ -86,6 +87,7 @@ class SnakeGame(object):
         self.prev_action = action
 
         next_head = self.next_head(action)
+        next_head=((next_head[0]+self.width)%self.width,(next_head[1]+self.height)%self.height)
         next_head_state = self.cell_state(next_head)
 
         if next_head_state == SnakeCellState.WALL:
@@ -100,6 +102,11 @@ class SnakeGame(object):
             return SnakeReward.WON
         
         self.remove_tail()
+        self.cur_step+=1
+        if self.cur_step%40==0:
+            self.remove_tail()
+            if not self.snake:
+                return SnakeReward.DEAD
         return SnakeReward.ALIVE
 
 
