@@ -1,2 +1,0 @@
-when pip uninstall error:
-rm ~/.local/lib/python3.8/site-packages/gym-snake.egg-link
