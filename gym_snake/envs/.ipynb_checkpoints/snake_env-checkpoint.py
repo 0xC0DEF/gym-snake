@@ -22,10 +22,12 @@ class SnakeCellState(object):
 class SnakeReward(object):
     ALIVE = 0
     DOT = 1
-    DEAD = -5
+    DEAD = -1
     WON = 10
 
+
 class SnakeGame(object):
+    HUNGRY_RATE=20
     def __init__(self, width, height, head):
         self.width = width
         self.height = height
@@ -103,7 +105,7 @@ class SnakeGame(object):
         
         self.remove_tail()
         self.cur_step+=1
-        if self.cur_step%40==0:
+        if self.cur_step%self.HUNGRY_RATE==0:
             self.remove_tail()
             if not self.snake:
                 return SnakeReward.DEAD
