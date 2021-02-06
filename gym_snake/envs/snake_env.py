@@ -9,8 +9,8 @@ from gym.utils import seeding
 
 class Option(object):
     HUNGRY_RATE=20
-    ROW=8
-    COL=8
+    ROW=7
+    COL=11
 
 class Action(object):
     LEFT=0
@@ -23,9 +23,9 @@ class CellState(object):
     DOT = 2
 
 class Reward(object):
-    ALIVE = -1/100
+    ALIVE = 0#-1/100
     DOT = 1
-    DEAD = -2/3
+    DEAD = -1#-2/3
     WON = 50
 
 class SnakeGame(object):
@@ -33,7 +33,7 @@ class SnakeGame(object):
         self.cur_step=0
 
         self.snake = deque()
-        self.empty_cells = {(x, y) for x in range(Option.COL) for y in range(Option.ROW)}
+        self.empty_cells = {(y, x) for x in range(Option.COL) for y in range(Option.ROW)}
         self.dot = None
         self.dir=0
 
@@ -112,16 +112,15 @@ class SnakeEnv(gym.Env):
         self.viewer = None
 
     def make_obs(self):
-        obs = [[[0.0 for _ in range(Option.COL)] for __ in range(Option.ROW)] for ___ in range(2)]
-        for (y,x) in self.game.snake:
-            obs[0][y][x]=1.0
-        if self.game.snake:
-            head=self.game.head()
-            obs[0][head[0]][head[1]]=1.5
+        obs = [[[0.0 for _ in range(Option.COL)] for __ in range(Option.ROW)] for ___ in range(3)]
+        snake = self.game.snake
+        for i in range(len(snake)):
+            y,x=snake[i]
+            obs[0][y][x]=1.1-i/len(snake)
+        if snake:
             ncell=self.game.next_cell()
-            obs[0][ncell[0]][ncell[1]]=0.5
-        
-        obs[1][self.game.dot[0]][self.game.dot[1]]=1.0
+            obs[1][ncell[0]][ncell[1]]=1
+        obs[2][self.game.dot[0]][self.game.dot[1]]=1.0
         return obs
     
     def step(self, action):
@@ -136,23 +135,28 @@ class SnakeEnv(gym.Env):
         return self.make_obs()
 
     def render(self, mode='human', close=False):
-        width = height = 600
-        width_scaling_factor = width / Option.COL
-        height_scaling_factor = height / Option.ROW
+        if Option.COL>Option.ROW:
+            width=600
+            height=int(600*Option.ROW/Option.COL)
+        else:
+            height=600
+            width=int(600*Option.ROW/Option.COL)
+        xr = width / Option.COL
+        yr = height / Option.ROW
 
         if self.viewer is None:
-            self.viewer = rendering.Viewer(width, height)
+            self.viewer = rendering.Viewer(width,height)
 
-        for x, y in self.game.snake:
-            l, r, t, b = x*width_scaling_factor, (x+1)*width_scaling_factor, y*height_scaling_factor, (y+1)*height_scaling_factor
-            square = rendering.FilledPolygon([(l,b), (l,t), (r,t), (r,b)])
+        for y, x in self.game.snake:
+            l, r, b, t = x*xr, (x+1)*xr, y*yr, (y+1)*yr
+            square = rendering.FilledPolygon([(l,b), (r,b), (r,t), (l,t)])
             square.set_color(0, 0, 0)
             self.viewer.add_onetime(square)
 
         if self.game.dot:
-            x, y = self.game.dot
-            l, r, t, b = x*width_scaling_factor, (x+1)*width_scaling_factor, y*height_scaling_factor, (y+1)*height_scaling_factor
-            square = rendering.FilledPolygon([(l,b), (l,t), (r,t), (r,b)])
+            y, x = self.game.dot
+            l, r, b, t = x*xr, (x+1)*xr, y*yr, (y+1)*yr
+            square = rendering.FilledPolygon([(l,b), (r,b), (r,t), (l,t)])
             square.set_color(1, 0, 0)
             self.viewer.add_onetime(square)
 
