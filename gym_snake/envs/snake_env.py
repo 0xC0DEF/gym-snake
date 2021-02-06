@@ -7,42 +7,35 @@ from gym import error, spaces, utils
 from gym.envs.classic_control import rendering
 from gym.utils import seeding
 
-class SnakeAction(object):
-    LEFT = 0
-    RIGHT = 1
-    UP = 2
-    DOWN = 3
-    INVALID = 4
+class Option(object):
+    HUNGRY_RATE=20
+    ROW=8
+    COL=8
 
-def invAct(act):
-    if act==4:
-        return 4
-    return act//2*2 + 1-act%2
+class Action(object):
+    LEFT=0
+    FORWARD=1
+    RIGHT=2
 
-class SnakeCellState(object):
+class CellState(object):
     EMPTY = 0
     WALL = 1
     DOT = 2
 
-class SnakeReward(object):
-    ALIVE = -1/50
+class Reward(object):
+    ALIVE = -1/60
     DOT = 1
     DEAD = -5
     WON = 10
 
-
 class SnakeGame(object):
-    HUNGRY_RATE=20
-    def __init__(self, width, height, head):
-        self.width = width
-        self.height = height
+    def __init__(self, head):
         self.cur_step=0
 
         self.snake = deque()
-        self.empty_cells = {(x, y) for x in range(width) for y in range(height)}
+        self.empty_cells = {(x, y) for x in range(Option.COL) for y in range(Option.ROW)}
         self.dot = None
-
-        self.prev_action = SnakeAction.INVALID
+        self.dir=0
 
         self.add_to_head(head)
         self.generate_dot()
@@ -56,10 +49,10 @@ class SnakeGame(object):
 
     def cell_state(self, cell):
         if cell in self.empty_cells:
-            return SnakeCellState.EMPTY
+            return CellState.EMPTY
         if cell == self.dot:
-            return SnakeCellState.DOT
-        return SnakeCellState.WALL
+            return CellState.DOT
+        return CellState.WALL
 
     def head(self):
         return self.snake[0]
@@ -74,94 +67,78 @@ class SnakeGame(object):
     def generate_dot(self):
         self.dot = random.sample(self.empty_cells, 1)[0]
         self.empty_cells.remove(self.dot)
-
-    def is_valid_action(self, action):
-        return action//2!=self.prev_action//2 or action%2==self.prev_action%2
-
-    def next_head(self, action):
-        r=None
-        head_x, head_y = self.head()
-        if action == SnakeAction.INVALID:
-            r=(head_x, head_y)
-        elif action == SnakeAction.LEFT:
-            r=(head_x - 1, head_y)
-        elif action == SnakeAction.RIGHT:
-            r=(head_x + 1, head_y)
-        elif action == SnakeAction.UP:
-            r=(head_x, head_y + 1)
-        else:
-            r=(head_x, head_y - 1)
-        r=((r[0]+self.width)%self.width,(r[1]+self.height)%self.height)
-        return r
+    
+    def next_cell(self):
+        dirs=[(0,1),(1,0),(0,-1),(-1,0)]
+        dy,dx=dirs[self.dir]
+        hy,hx=self.head()
+        hy=(hy+dy+Option.ROW)%Option.ROW
+        hx=(hx+dx+Option.COL)%Option.COL
+        return (hy,hx)
+        
 
     def step(self, action):
-        if not self.is_valid_action(action):
-            return SnakeReward.DEAD
-        self.prev_action = action
-
-        next_head = self.next_head(action)
-        next_head_state = self.cell_state(next_head)
-
-        if next_head_state == SnakeCellState.WALL:
-            return SnakeReward.DEAD
-
-        self.add_to_head(next_head)
+        if action==Action.LEFT:
+            self.dir=(self.dir-1+4)%4
+        if action==Action.RIGHT:
+            self.dir=(self.dir+1)%4
         
-        if next_head_state == SnakeCellState.DOT:
+        next_head=self.next_cell()
+        next_head_state = self.cell_state(next_head)
+        if next_head_state == CellState.WALL:
+            return Reward.DEAD
+        self.add_to_head(next_head)
+        if next_head_state == CellState.DOT:
             if self.can_generate_dot():
                 self.generate_dot()
-                return SnakeReward.DOT                
-            return SnakeReward.WON
+                return Reward.DOT                
+            return Reward.WON
         
         self.remove_tail()
         self.cur_step+=1
-        if self.cur_step%self.HUNGRY_RATE==0:
+        if self.cur_step%Option.HUNGRY_RATE==0:
             self.remove_tail()
             if not self.snake:
-                return SnakeReward.DEAD
-        return SnakeReward.ALIVE
+                return Reward.DEAD
+        return Reward.ALIVE
 
 
 class SnakeEnv(gym.Env):
     metadata= {'render.modes': ['human']}
 
     def __init__(self):
-        self.action_space = spaces.Discrete(4)
-
-        self.width = 8
-        self.height = 8
-        self.start = (1, 1)
-
-        self.game = SnakeGame(self.width, self.height, self.start)
+        self.start_pos = (0, 0)
+        self.game = SnakeGame(self.start_pos)
         self.viewer = None
 
     def make_obs(self):
-        obs = [[[0.0 for _ in range(self.width)] for __ in range(self.height)] for ___ in range(2)]
-        snake_len=len(self.game.snake)
-        for i in range(snake_len):
-            y,x=self.game.snake[i]
-            obs[0][y][x]=1.0+i/snake_len
-        if snake_len:
-            py,px=self.game.next_head(invAct(self.game.prev_action))
-            obs[0][py][px]=1.0+1/snake_len
+        obs = [[[0.0 for _ in range(Option.COL)] for __ in range(Option.ROW)] for ___ in range(2)]
+        for (y,x) in self.game.snake:
+            obs[0][y][x]=1.0
+        if self.game.snake:
+            head=self.game.head()
+            obs[0][head[0]][head[1]]=1.5
+            ncell=self.game.next_cell()
+            obs[0][ncell[0]][ncell[1]]=0.5
+        
         obs[1][self.game.dot[0]][self.game.dot[1]]=1.0
         return obs
     
     def step(self, action):
         reward = self.game.step(action)
-        done = reward in [SnakeReward.DEAD, SnakeReward.WON]
+        done = reward in [Reward.DEAD, Reward.WON]
         info = None
     
         return self.make_obs(), reward, done, info
 
     def reset(self):
-        self.game = SnakeGame(self.width, self.height, self.start)
+        self.game = SnakeGame(self.start_pos)
         return self.make_obs()
 
     def render(self, mode='human', close=False):
         width = height = 600
-        width_scaling_factor = width / self.width
-        height_scaling_factor = height / self.height
+        width_scaling_factor = width / Option.COL
+        height_scaling_factor = height / Option.ROW
 
         if self.viewer is None:
             self.viewer = rendering.Viewer(width, height)
