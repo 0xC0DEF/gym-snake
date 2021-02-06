@@ -23,10 +23,10 @@ class CellState(object):
     DOT = 2
 
 class Reward(object):
-    ALIVE = -1/60
+    ALIVE = -1/100
     DOT = 1
-    DEAD = -5
-    WON = 10
+    DEAD = -2/3
+    WON = 50
 
 class SnakeGame(object):
     def __init__(self, head):
