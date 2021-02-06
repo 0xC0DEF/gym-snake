@@ -135,29 +135,39 @@ class SnakeEnv(gym.Env):
         return self.make_obs()
 
     def render(self, mode='human', close=False):
+        width=0
+        height=0
         if Option.COL>Option.ROW:
             width=600
             height=int(600*Option.ROW/Option.COL)
         else:
-            height=600
             width=int(600*Option.ROW/Option.COL)
+            height=600
         xr = width / Option.COL
         yr = height / Option.ROW
 
         if self.viewer is None:
             self.viewer = rendering.Viewer(width,height)
+            
+        bg = rendering.FilledPolygon([(0,0), (width,0), (width,height), (0,height)])
+        bg.set_color(0,0,0)
+        self.viewer.add_onetime(bg)
 
-        for y, x in self.game.snake:
+        for i in range(len(self.game.snake)):
+            y,x=self.game.snake[i]
             l, r, b, t = x*xr, (x+1)*xr, y*yr, (y+1)*yr
             square = rendering.FilledPolygon([(l,b), (r,b), (r,t), (l,t)])
-            square.set_color(0, 0, 0)
+            c=1-i/len(self.game.snake)*3/4
+            square.set_color(c,c,c)
+            if not i:
+                square.set_color(1,0,0)
             self.viewer.add_onetime(square)
 
         if self.game.dot:
             y, x = self.game.dot
             l, r, b, t = x*xr, (x+1)*xr, y*yr, (y+1)*yr
             square = rendering.FilledPolygon([(l,b), (r,b), (r,t), (l,t)])
-            square.set_color(1, 0, 0)
+            square.set_color(0, 1, 0)
             self.viewer.add_onetime(square)
 
         return self.viewer.render(return_rgb_array=mode=='rgb_array', )
