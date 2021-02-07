@@ -79,9 +79,9 @@ class SnakeGame(object):
 
     def step(self, action):
         if action==Action.LEFT:
-            self.dir=(self.dir-1+4)%4
+            self.dir=(self.dir+1+4)%4
         if action==Action.RIGHT:
-            self.dir=(self.dir+1)%4
+            self.dir=(self.dir-1+4)%4
         
         next_head=self.next_cell()
         next_head_state = self.cell_state(next_head)
