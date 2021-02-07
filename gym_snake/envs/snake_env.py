@@ -23,9 +23,9 @@ class CellState(object):
     DOT = 2
 
 class Reward(object):
-    ALIVE = 0#-1/100
+    ALIVE = -1/100
     DOT = 1
-    DEAD = -1#-2/3
+    DEAD = -2
     WON = 50
 
 class SnakeGame(object):
@@ -114,13 +114,19 @@ class SnakeEnv(gym.Env):
     def make_obs(self):
         obs = [[[0.0 for _ in range(Option.COL)] for __ in range(Option.ROW)] for ___ in range(3)]
         snake = self.game.snake
+        
         for i in range(len(snake)):
             y,x=snake[i]
-            obs[0][y][x]=1.1-i/len(snake)
-        if snake:
-            ncell=self.game.next_cell()
-            obs[1][ncell[0]][ncell[1]]=1
+            obs[0][y][x]=2-i/len(snake)
+        
+        if self.game.snake:
+            hy,hx=self.game.head()
+            obs[2][hy][hx]=1
+            ny,nx=self.game.next_cell()
+            obs[2][ny][nx]=2
+        
         obs[2][self.game.dot[0]][self.game.dot[1]]=1.0
+        
         return obs
     
     def step(self, action):
