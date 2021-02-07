@@ -2,7 +2,7 @@
 
 1) Clone the repo:
 ```
-$ git clone git@github.com:SeanBae/gym-snake.git
+$ git clone https://github.com/0xC0DEF/gym-snake
 ```
 
 2) `cd` into `gym-snake` and run:
