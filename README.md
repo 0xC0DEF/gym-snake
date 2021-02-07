@@ -2,7 +2,7 @@
 
 1) Clone the repo:
 ```
-$ git clone git@github.com:SeanBae/gym-snake.git
+$ git clone https://github.com/0xC0DEF/gym-snake
 ```
 
 2) `cd` into `gym-snake` and run:
@@ -10,21 +10,21 @@ $ git clone git@github.com:SeanBae/gym-snake.git
 $ pip install -e .
 ```
 
-3) This should run total 100 instances of the `snake-v0` environment for 1000 timesteps, rendering the environment at each step. By default, you should see a window pop up rendering the classic Snake problem:
-```python
+3) Test it
+```
 import gym
 import gym_snake
-
+import time
 env = gym.make('snake-v0')
 
-for i in range(100):
-    env.reset()
-    for t in range(1000):
-        env.render()
-        observation, reward, done, info = env.step(env.action_space.sample())
-        if done:
-            print('episode {} finished after {} timesteps'.format(i, t))
-            break
-
-
+obs=env.reset()
+#0: left turn
+#1: go ahead
+#2: right turn
+acts=[1,1,1,0,1,1,2,1,1]
+for i in acts:
+    obs, rwd, done, _ = env.step(i)
+    env.render()
+    time.sleep(1)
+env.close()
 ```
