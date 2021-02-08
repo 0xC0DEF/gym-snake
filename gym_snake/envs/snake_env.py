@@ -23,7 +23,7 @@ class CellState(object):
     DOT = 2
 
 class Reward(object):
-    ALIVE = -1/100
+    ALIVE = -1/20
     DOT = 1
     DEAD = -2
     WON = 50
