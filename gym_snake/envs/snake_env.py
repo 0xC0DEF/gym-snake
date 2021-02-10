@@ -140,7 +140,7 @@ class SnakeEnv(gym.Env):
         self.game = SnakeGame(self.start_pos)
         return self.make_obs()
 
-    def render(self, mode='human', close=False):
+    def render(self, mode='human'):
         width=0
         height=0
         if Option.COL>Option.ROW:
