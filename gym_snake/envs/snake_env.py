@@ -24,10 +24,10 @@ class CellState(object):
 
 class Reward(object):
     DOT = 1/8
-    LOSE_STARVED = -1/8
+    LOSE_STARVED = 0 #-1/8
     LOSE_COLLISION = -1
     WON = 1
-    IDLE = DOT/Option.HUNGRY_RATE
+    IDLE = -DOT/Option.HUNGRY_RATE*0.66
 
 class SnakeGame(object):
     def __init__(self, head):

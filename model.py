@@ -39,18 +39,13 @@ class NN(nn.Module):
             FFC(self.chn_in,self.chn_mid,3),
             FFC(self.chn_mid,self.chn_mid,3),
             FFC(self.chn_mid,self.chn_mid,3),
+            FFC(self.chn_mid,self.chn_mid,5),
             FFC(self.chn_mid,self.chn_mid,3),
             FFC(self.chn_mid,self.chn_out,3)])
         
         self.dense=nn.Sequential(
-            nn.Linear(self.chn_out*GameOption.ROW*GameOption.COL,256),
-            nn.Dropout(0.5),
-            nn.LeakyReLU(0.1),
-            
-            CTR(256,128,True),
-            CTR(128,32),
-            
-            nn.Linear(32,3),
+            CTR(self.chn_out*GameOption.ROW*GameOption.COL,512),
+            CTR(512,3),
         )
         def weight_init(x):
             if type(x)==nn.Linear or type(x)==nn.Conv2d:
