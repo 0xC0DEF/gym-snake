@@ -23,29 +23,23 @@ class CellState(object):
     DOT = 2
 
 class Reward(object):
-    ALIVE = -1/20
-    DOT = 1
-    DEAD = -2
-    WON = 50
+    DOT = 1/8
+    LOSE_STARVED = -1/8
+    LOSE_COLLISION = -1
+    WON = 1
+    IDLE = DOT/Option.HUNGRY_RATE
 
 class SnakeGame(object):
     def __init__(self, head):
         self.cur_step=0
 
         self.snake = deque()
-        self.empty_cells = {(y, x) for x in range(Option.COL) for y in range(Option.ROW)}
+        self.empty_cells = [(y, x) for x in range(Option.COL) for y in range(Option.ROW)]
         self.dot = None
         self.dir=0
 
-        self.add_to_head(head)
+        self.push_head(head)
         self.generate_dot()
-
-    def add_to_head(self, cell):
-        self.snake.appendleft(cell)
-        if cell in self.empty_cells:
-            self.empty_cells.remove(cell)
-        if self.dot == cell:
-            self.dot = None
 
     def cell_state(self, cell):
         if cell in self.empty_cells:
@@ -56,10 +50,26 @@ class SnakeGame(object):
 
     def head(self):
         return self.snake[0]
+    def tail(self):
+        return self.snake[-1]
 
-    def remove_tail(self):
-        tail = self.snake.pop()
-        self.empty_cells.add(tail)
+    def push_head(self, cell):
+        self.snake.appendleft(cell)
+        if cell in self.empty_cells:
+            self.empty_cells.remove(cell)
+        if self.dot == cell:
+            self.dot = None
+    
+    def push_tail(self, cell):
+        self.snake.append(cell)
+        if cell in self.empty_cells:
+            self.empty_cells.remove(cell)
+        if self.dot == cell:
+            self.dot = None
+
+    def pop_tail(self):
+        self.empty_cells.append(self.snake.pop())
+        return self.empty_cells[-1]
 
     def can_generate_dot(self):
         return len(self.empty_cells) > 0
@@ -84,23 +94,26 @@ class SnakeGame(object):
             self.dir=(self.dir-1+4)%4
         
         next_head=self.next_cell()
+        tcell=self.pop_tail()
         next_head_state = self.cell_state(next_head)
-        if next_head_state == CellState.WALL:
-            return Reward.DEAD
-        self.add_to_head(next_head)
+        self.push_tail(tcell)
+        
+        if next_head_state == CellState.WALL:    
+            return Reward.LOSE_COLLISION
+        self.push_head(next_head)
         if next_head_state == CellState.DOT:
             if self.can_generate_dot():
                 self.generate_dot()
                 return Reward.DOT                
             return Reward.WON
-        
-        self.remove_tail()
+
         self.cur_step+=1
+        self.pop_tail()
         if self.cur_step%Option.HUNGRY_RATE==0:
-            self.remove_tail()
+            self.pop_tail()
             if not self.snake:
-                return Reward.DEAD
-        return Reward.ALIVE
+                return Reward.LOSE_STARVED
+        return Reward.IDLE
 
 
 class SnakeEnv(gym.Env):
@@ -117,21 +130,23 @@ class SnakeEnv(gym.Env):
         
         for i in range(len(snake)):
             y,x=snake[i]
-            obs[0][y][x]=2-i/len(snake)
+            obs[0][y][x]=1-i/len(snake)
         
         if self.game.snake:
             hy,hx=self.game.head()
-            obs[2][hy][hx]=1
+            obs[2][hy][hx]=0.5
             ny,nx=self.game.next_cell()
-            obs[2][ny][nx]=2
-        
+            obs[2][ny][nx]=1.0
+        #BUG??
+        if not self.game.dot:
+            self.game.generate_dot()
         obs[2][self.game.dot[0]][self.game.dot[1]]=1.0
         
         return obs
     
     def step(self, action):
         reward = self.game.step(action)
-        done = reward in [Reward.DEAD, Reward.WON]
+        done = reward in [Reward.LOSE_STARVED, Reward.LOSE_COLLISION, Reward.WON]
         info = None
     
         return self.make_obs(), reward, done, info
@@ -166,7 +181,7 @@ class SnakeEnv(gym.Env):
             c=1-i/len(self.game.snake)*3/4
             square.set_color(c,c,c)
             if not i:
-                square.set_color(1,0,0)
+                square.set_color(0,0,1)
             self.viewer.add_onetime(square)
 
         if self.game.dot:

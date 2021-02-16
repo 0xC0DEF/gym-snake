@@ -1,2 +1,2 @@
 class ReplayMemory(object):
-    pass
+    

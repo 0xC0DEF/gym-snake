@@ -31,14 +31,15 @@ class CTR(nn.Module):
 class NN(nn.Module):
     def __init__(self):
         super(NN,self).__init__()
-        self.chn_in=12
-        self.chn_mid=12
-        self.chn_out=12
+        self.chn_in=8
+        self.chn_mid=8
+        self.chn_out=8
         self.ch_adjuster=nn.Conv2d(3,self.chn_in,1,padding=0,bias=False)
         self.ffcs=nn.ModuleList([
             FFC(self.chn_in,self.chn_mid,3),
             FFC(self.chn_mid,self.chn_mid,3),
-            FFC(self.chn_mid,self.chn_mid,5),
+            FFC(self.chn_mid,self.chn_mid,3),
+            FFC(self.chn_mid,self.chn_mid,3),
             FFC(self.chn_mid,self.chn_out,3)])
         
         self.dense=nn.Sequential(
@@ -47,16 +48,17 @@ class NN(nn.Module):
             nn.LeakyReLU(0.1),
             
             CTR(256,128,True),
-            CTR(128,128),
             CTR(128,32),
             
             nn.Linear(32,3),
         )
-#         for ffc in self.ffcs:
-#             init.xavier_uniform_(ffc.c.weight.data)
-#             init.xavier_uniform_(ffc.c.bias.data)
-#         init.xavier_uniform_(dense.weight.data)
-#         init.xavier_uniform_(dense.bias.data)
+        def weight_init(x):
+            if type(x)==nn.Linear or type(x)==nn.Conv2d:
+                init.xavier_uniform_(x.weight.data)
+                if x.bias != None:
+                    init.zeros_(x.bias)
+        self.ffcs.apply(weight_init)
+        self.dense.apply(weight_init)
                 
     def forward(self,x):
         #x=x.reshape((-1,self.chn_in,GameOption.ROW,GameOption.COL))
