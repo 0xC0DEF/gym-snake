@@ -25,12 +25,12 @@ class SumTree(object):
         return self.tr[1]
 
 class PERMemory(object):
-    eps=.01
-    alpha=.6
-    beta=.4
-    
-    def __init__(self,n):
+    def __init__(self,n,alpha=.6,beta=.4,eps=.01):
         self.n=n
+        self.alpha=alpha
+        self.beta=beta
+        self.eps=eps
+        
         self.tree=SumTree(n)
         self.data=np.zeros(n,dtype=object)
         self.cnt=0
