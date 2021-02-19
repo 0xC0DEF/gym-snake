@@ -33,21 +33,21 @@ class CTR(nn.Module):
 class NN(nn.Module):
 	def __init__(self):
 		super(NN,self).__init__()
-		self.chn_in=6
-		self.chn_mid=6
-		self.chn_out=6
+		self.chn_in=8
+		self.chn_out=32
 		self.ch_adjuster=nn.Conv2d(2,self.chn_in,1,padding=0,bias=False)
 		self.ffcs=nn.ModuleList([
-			FFC(self.chn_in,self.chn_mid,3),
-			FFC(self.chn_mid,self.chn_mid,5),
-#             FFC(self.chn_mid,self.chn_mid,3),
-#             FFC(self.chn_mid,self.chn_mid,5),
-			FFC(self.chn_mid,self.chn_mid,3),
-			FFC(self.chn_mid,self.chn_out,3)])
+			FFC(self.chn_in,12,3),
+			#FFC(12,12,3),
+			FFC(12,16,3),
+			FFC(16,20,3),
+			FFC(20,24,3),
+			FFC(24,self.chn_out,3)])
 		
 		self.dense=nn.Sequential(
 			CTR(self.chn_out*GameOption.ROW*GameOption.COL+1,512),
-			CTR(512,128),
+			CTR(512,256),
+			CTR(256,128),
 			CTR(128,4),
 		)
 		def weight_init(x):
@@ -64,7 +64,7 @@ class NN(nn.Module):
 		xa=self.ch_adjuster(x)
 		x=xa
 		for ffc in self.ffcs:
-			x=ffc(x)+xa #residual training
+			x=ffc(x)#+xa #residual training
 		x=x.reshape(-1,self.chn_out*GameOption.ROW*GameOption.COL)
 		starvation=starvation.reshape(-1,1)
 		x=tc.cat((x,tc.tensor(starvation).to(DEVICE)),1)
