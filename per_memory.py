@@ -20,9 +20,8 @@ class SumTree(object):
                 psum-=self.tr[ti<<1]
                 ti=ti<<1|1
         return ti-self.n
-    
-    def sumall(self):
-        return self.tr[1]
+    def getval(self,idx): return self.tr[self.n+idx]
+    def sumall(self): return self.tr[1]
 
 class PERMemory(object):
     def __init__(self,n,alpha=.6,beta=.4,eps=.01):
@@ -51,7 +50,7 @@ class PERMemory(object):
         for i in range(k):
             x=np.random.uniform(i,i+1)/k*self.tree.sumall()
             idx=self.tree.lower_bound(x)
-            prob=self.tree.tr[self.n+idx]/self.tree.sumall()
+            prob=self.tree.getval(idx)/self.tree.sumall()
             isw=(min(self.cnt,self.n)*prob)**-b
             s.append((idx,isw,self.data[idx]))
             if max_isw<isw: max_isw=isw
