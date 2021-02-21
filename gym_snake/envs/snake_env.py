@@ -33,11 +33,11 @@ class CellState(object):
 	DOT = 2
 
 class Reward(object):
-	DOT = 1/2
+	DOT = 1/3
 	LOSE_STARVED = -1
 	LOSE_COLLISION = -1
-	WON = 20
-	IDLE = DOT/10/Option.HUNGRY_FREQ
+	WON = 10
+	IDLE = -DOT/Option.HUNGRY_FREQ#0 #DOT/10/Option.HUNGRY_FREQ
 
 dirs=[(0,1),(1,0),(0,-1),(-1,0)]
 
@@ -124,7 +124,7 @@ class SnakeGame(object):
 		if next_head_state == CellState.DOT:
 			if self.can_generate_dot():
 				self.generate_dot()
-				return Reward.DOT                
+				return Reward.DOT#*len(self.snake)**0.5
 			return Reward.WON
 
 		self.cur_step+=1
@@ -133,7 +133,7 @@ class SnakeGame(object):
 			self.pop_tail()
 			if not self.snake:
 				return Reward.LOSE_STARVED
-		return len(self.snake)**1.8*Reward.IDLE
+		return Reward.IDLE#*len(self.snake)**1.8
 
 
 class SnakeEnv(gym.Env):

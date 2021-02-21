@@ -46,7 +46,8 @@ class NN(nn.Module):
 		
 		self.dense=nn.Sequential(
 			CTR(self.chn_out*GameOption.ROW*GameOption.COL+1,512),
-			CTR(512,256),
+			CTR(512,1024),
+			CTR(1024,256),
 			CTR(256,128),
 			CTR(128,4),
 		)
