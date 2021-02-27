@@ -17,7 +17,7 @@ class DrawText:
 		self.label.draw()
 
 class Option(object):
-	HUNGRY_FREQ=20
+	HUNGRY_FREQ=10
 	ROW=7
 	COL=11
 
@@ -37,7 +37,7 @@ class Reward(object):
 	LOSE_STARVED = -1
 	LOSE_COLLISION = -1
 	WON = 10
-	IDLE = -DOT/Option.HUNGRY_FREQ#0 #DOT/10/Option.HUNGRY_FREQ
+	IDLE = 0#-DOT/Option.HUNGRY_FREQ#0 #DOT/10/Option.HUNGRY_FREQ
 
 dirs=[(0,1),(1,0),(0,-1),(-1,0)]
 

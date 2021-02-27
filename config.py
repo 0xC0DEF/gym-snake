@@ -1,4 +1,4 @@
-class GameOption(object):
-	HUNGRY_RATE=20
+class Option(object):
+	HUNGRY_RATE=10
 	ROW=7
 	COL=11
